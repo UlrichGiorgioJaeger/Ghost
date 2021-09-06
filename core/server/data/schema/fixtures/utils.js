@@ -43,6 +43,20 @@ const matchFunc = function matchFunc(match, key, value) {
     };
 };
 
+const matchObj = function matchObj(match, item) {
+    const matchedObj = {};
+
+    if (_.isArray(match)) {
+        _.each(match, function (matchProp) {
+            matchedObj[matchProp] = item.get(matchProp);
+        });
+    } else {
+        matchedObj[match] = item.get(match);
+    }
+
+    return matchedObj;
+};
+
 /**
  * ### Fetch Relation Data
  * Before we build relations we need to fetch all of the models from both sides so that we can
@@ -144,7 +158,12 @@ const addFixturesForRelation = function addFixturesForRelation(relationFixture, 
                 toItems = _.reject(toItems, function (item) {
                     return fromItem
                         .related(relationFixture.from.relation)
-                        .find(matchFunc(relationFixture.to.match, item));
+                        .find((model) => {
+                            const objectToMatch = matchObj(relationFixture.to.match, item);
+                            return Object.keys(objectToMatch).every(function (keyToCheck) {
+                                return model.get(keyToCheck) === objectToMatch[keyToCheck];
+                            });
+                        });
                 });
 
                 if (toItems && toItems.length > 0) {
